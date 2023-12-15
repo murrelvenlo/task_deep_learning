@@ -5,3 +5,4 @@ Requests==2.31.0
 selenium==4.16.0
 streamlit
 protobuf>=3.9.2
+scipy
