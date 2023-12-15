@@ -4,3 +4,4 @@ numpy==1.24.1
 Requests==2.31.0
 selenium==4.16.0
 streamlit==1.28.1
+protobuf==3.18.1
