@@ -286,6 +286,9 @@ if uploaded_file is not None:
 
 # Section 4: Confusion Matrix
 if st.button("Show Confusion Matrix"):
+
+    class_labels = ["daisy", "orchids", "roses", "sunflowers", "tulips"]
+
     # Generate Numpy array with True classes' indexes
     y_true = np.random.randint(low=0, high=5, size=100, dtype=int)
 
@@ -312,7 +315,7 @@ if st.button("Show Confusion Matrix"):
 
     # Display Confusion Matrix
     st.subheader("Confusion Matrix")
-    display_cm = ConfusionMatrixDisplay(cm, display_labels=class_names)
+    display_cm = ConfusionMatrixDisplay(cm, display_labels=class_labels)
 
     # Plot Confusion Matrix with 'Blues' color map
     display_cm.plot(cmap='Blues', xticks_rotation=25)
