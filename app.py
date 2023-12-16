@@ -86,19 +86,19 @@ def download_images(search_query, category, num_images=100):
 
     st.success(f"Downloaded {min(len(img_urls), num_images)} images for {category}.")
 
-        # Close the browser
+    # Close the browser
     driver.quit()
 
-    # Download Button
-    if st.button("Download Images"):
-        # Specify the categories
-        categories = ["roses", "sunflowers", "orchids", "tulips", "daisy"]
-        num_images_per_category = 200
+# Download Button
+if st.button("Download Images"):
+    # Specify the categories
+    categories = ["roses", "sunflowers", "orchids", "tulips", "daisy"]
+    num_images_per_category = 200
 
-        # Loop through categories and download images
-        for category in categories:
-            st.write(f"Downloading images for {category}...")
-            download_images(category, category, num_images=num_images_per_category)
+    # Loop through categories and download images
+    for category in categories:
+        st.write(f"Downloading images for {category}...")
+        download_images(category, category, num_images=num_images_per_category)
 
     st.write("""
     Below, you can download the images for each category.
@@ -150,37 +150,107 @@ model.add(Dense(activation="relu", units=128))
 model.add(Dense(activation="softmax", units=5))
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
-# Train the model
-history = model.fit(training_set,
-                    validation_data=validation_set,
-                    steps_per_epoch=10,
-                    epochs=20
+# global scope
+history = None
+
+# Function to train the model
+def train_model():
+    # Train the model
+    result = model.fit(training_set,
+                      validation_data=validation_set,
+                      steps_per_epoch=10,
+                      epochs=20
+                      )
+    return result
+
+# Train Model Button
+if st.button("Train Model"):
+    history = train_model()
+
+# Button to train the model and display information
+if st.button("Train Model and Display Information"):
+    if history is not None:
+        # Update the global history variable
+        st.warning("Model has already been trained. Please use the 'Show Loss and Accuracy Curves' button.")
+    else:
+        history = train_model()
+
+        # Display training information
+        st.subheader("Training Information")
+        for epoch in range(len(history.history['loss'])):
+            st.text(f"Epoch {epoch + 1}/{len(history.history['loss'])}\n"
+                    f"10/10 [==============================] - 2s 141ms/step - "
+                    f"loss: {history.history['loss'][epoch]:.4f} - "
+                    f"accuracy: {history.history['accuracy'][epoch]:.4f} - "
+                    f"val_loss: {history.history['val_loss'][epoch]:.4f} - "
+                    f"val_accuracy: {history.history['val_accuracy'][epoch]:.4f}\n"
                     )
 
+        # Display training set information
+        st.subheader("Training Set Information")
+        st.write(f"Found {training_set.samples} files belonging to {training_set.num_classes} classes.")
+        st.write(f"Using {training_set.samples} files for training.")
+
+        # Display validation set information
+        st.subheader("Validation Set Information")
+        st.write(f"Found {validation_set.samples} files belonging to {validation_set.num_classes} classes.")
+        st.write(f"Using {validation_set.samples} files for validation.")
+
+        # Display test set information
+        st.subheader("Test Set Information")
+        st.write(f"Found {test_set.samples} files belonging to {test_set.num_classes} classes.")
+        st.write(f"Using {test_set.samples} files for testing.")
+
+
+
+# Column Layout
+col1, col2 = st.columns(2)
+
+# Function to print model summary
+def print_model_summary(x):
+    model_summary.write(x + '\n')
+
 # Display model summary
-if st.button("Show Model Summary"):
-    st.subheader("Model Summary")
-    st.text(model.summary())
+with col1:
+    if st.button("Show Model Summary"):
+        st.subheader("Model Summary")
+        model_summary = st.empty()  # Create an empty slot for later use
+        model.summary(print_fn=print_model_summary)
+
+history = model.fit(training_set,
+                        validation_data=validation_set,
+                        steps_per_epoch=10,
+                        epochs=20)
 
 # Plot the loss and accuracy curves
-if st.button("Show Loss and Accuracy Curves"):
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
-    ax1.plot(history.history['loss'], label='training loss')
-    ax1.plot(history.history['val_loss'], label='validation loss')
-    ax1.set_title('Loss curves')
-    ax1.set_xlabel('Epoch')
-    ax1.set_ylabel('Loss')
-    ax1.legend()
+with col2:
+    if st.button("Show Loss and Accuracy Curves"):
+        if history is not None and 'loss' in history.history and 'accuracy' in history.history:
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5))
+            ax1.plot(history.history['loss'], label='training loss')
+            ax1.plot(history.history['val_loss'], label='validation loss')
+            ax1.set_title('Loss curves')
+            ax1.set_xlabel('Epoch')
+            ax1.set_ylabel('Loss')
+            ax1.legend()
 
-    ax2.plot(history.history['accuracy'], label='training accuracy')
-    ax2.plot(history.history['val_accuracy'], label='validation accuracy')
-    ax2.set_title('Accuracy curves')
-    ax2.set_xlabel('Epoch')
-    ax2.set_ylabel('Accuracy')
-    ax2.legend()
+            ax2.plot(history.history['accuracy'], label='training accuracy')
+            ax2.plot(history.history['val_accuracy'], label='validation accuracy')
+            ax2.set_title('Accuracy curves')
+            ax2.set_xlabel('Epoch')
+            ax2.set_ylabel('Accuracy')
+            ax2.legend()
 
-    fig.tight_layout()
-    st.pyplot(fig)
+            fig.tight_layout()
+
+            # Save the plot as an image
+            plot_path = 'loss_accuracy_plot.png'
+            fig.savefig(plot_path)
+
+            # Display the saved image in Streamlit
+            st.image(plot_path, caption='Loss and Accuracy Curves', use_column_width=True)
+        else:
+            st.warning("Please train the model first before attempting to plot curves.")
 
 # Evaluate the model on the test set
 if st.button("Show Test Results"):
@@ -189,10 +259,10 @@ if st.button("Show Test Results"):
     st.text(f'Test loss: {test_loss}')
     st.text(f'Test accuracy: {test_accuracy}')
 
-# Allow users to upload their own image
+# Section 3: Uploaded Image Prediction
+st.title("Uploaded Image Prediction")
 uploaded_file = st.file_uploader("Upload an image", type="jpg")
 
-# Load and predict on the uploaded image
 if uploaded_file is not None:
     uploaded_image = load_img(uploaded_file, target_size=(64, 64))
     uploaded_image_array = img_to_array(uploaded_image)
