@@ -12,6 +12,7 @@ from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.firefox.service import Service
 import requests
 import time
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 # Streamlit App Header
 st.title("Image Classification Task Introduction")
@@ -282,3 +283,50 @@ if uploaded_file is not None:
     st.subheader("Uploaded Image Prediction")
     st.text(f"The predicted class for the uploaded image is: {predicted_class}")
     st.image(uploaded_image, caption=f"Predicted class: {predicted_class}", use_column_width=True)
+
+# Section 4: Confusion Matrix
+if st.button("Show Confusion Matrix"):
+    # Generate Numpy array with True classes' indexes
+    y_true = np.random.randint(low=0, high=5, size=100, dtype=int)
+
+    # Calculate number of samples for every class
+    classes_indexes, classes_frequency = np.unique(y_true, return_counts=True)
+
+    # Make a copy of array with True classes' indexes
+    y_predict = np.copy(y_true)
+
+    random_classes = np.random.randint(low=0, high=len(y_true), size=int(0.25 * len(y_true)), dtype=int)
+
+    # Iterate chosen indexes and replace them with other classes' indexes
+    for i in random_classes:
+        # Generate new class index
+        y_predict[i] = np.random.randint(low=0, high=5, dtype=int)
+
+        # Check point
+        # Show difference between True classes' indexes and Predicted ones
+        print('index = {0:2d}, True class => {1}, {2} <= Predicted class'.
+              format(i, y_true[i], y_predict[i]))
+
+    # Compute Confusion Matrix
+    cm = confusion_matrix(y_true, y_predict)
+
+    # Display Confusion Matrix
+    st.subheader("Confusion Matrix")
+    display_cm = ConfusionMatrixDisplay(cm, display_labels=class_names)
+
+    # Plot Confusion Matrix with 'Blues' color map
+    display_cm.plot(cmap='Blues', xticks_rotation=25)
+
+    # Setting fontsize for axis labels
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+
+    # Adding title to the plot
+    plt.title('Confusion Matrix', fontsize=18)
+
+    # Save the plot as an image
+    confusion_matrix_path = 'confusion_matrix_plot.png'
+    plt.savefig(confusion_matrix_path, transparent=True, dpi=300)
+
+    # Display the saved image in Streamlit
+    st.image(confusion_matrix_path, caption='Confusion Matrix', use_column_width=True)
